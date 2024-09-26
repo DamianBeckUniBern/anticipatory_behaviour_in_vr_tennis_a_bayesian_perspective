@@ -3,7 +3,7 @@ This is the repository for our work “*From simple lab tasks to the virtual cou
 
 We developed an immersive VR tennis environment. In two experiments, we tested how participants integrate prior and sensory information when returning tennis serves. As an indicator of their estimation of the ball-bounce location, we analysed predictive gaze behaviour.
 
-<img src="./experimental_task/tennis.gif" alt="image" width="700" height="auto">
+<img src="./experimental_task/experimental_task.gif" alt="image" width="700" height="auto">
 
 ## Descriptive Analysis 
 
