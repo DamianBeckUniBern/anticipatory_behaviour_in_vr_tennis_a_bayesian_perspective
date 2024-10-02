@@ -11,9 +11,11 @@ Development of correct response rate and hit rate over all blocks with a probabi
 |                                                              Correct response rats                                                              |                                                              hit rate                                                              |
 | :------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------: |
 | <img src="./plots/sqrt_correct_response_rate.svg" alt="Correct response rates" style="width:350px;height:auto;"> | <img src="./plots/sqrt_hit_rate.svg" alt="hit rate" style="width:350px;height:auto;"> |
-
+Figure 1 Development of tennis player’s correct response rate (left) to go the correct side and hit rate (right) during the experiment. The congruent trials were played with an 80% chance and the incongruent with a 20% chance. The trials before were played with a 50% chance on both sides, such as they started with a neutral prior. We took the root of the trial number as the regression predictor according the exponential law of practice (Heathcote & Brown, 2000). The uncertainty area represents a 95% confidence interval of the regression lines.
 ## Weight shift over a return
 <img src="./plots/prior_impact_over_second_half_of_biased_and_neutral_trials_on_weight_shift.png" style="width:850px;height:auto;">
+
+Figure 2 Development of tennis player’s weight shifting in returning a tennis serve during the experiment. The congruent trials were played with an 80% chance and the incongruent with a 20% chance. The trials before were played with a 50% chance on both sides, such as they started with a neutral prior. A positive value means a weight shift directed to the more probable side (the prior).
 
 ## Repository structure 
 
