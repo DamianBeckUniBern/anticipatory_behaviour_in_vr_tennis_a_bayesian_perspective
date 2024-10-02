@@ -1,4 +1,3 @@
-# anticipatory_behaviour_in_vr_tennis_a_bayesian_perspective
 This is the repository for our work “*Tennis players exploit prior information to improve performance: evidence for continuous anticipatory decision-making*” containing data and code used for the data analysis, the experimental protocols, c3d files of a 21 skeleton model of each return of each tennis player, and visualisation.
 
 We developed an immersive VR tennis environment, where we tested how tennis players exploit prior knowledge to improve performance und continuous decision-making when returning tennis serves.
@@ -6,6 +5,15 @@ We developed an immersive VR tennis environment, where we tested how tennis play
 <img src="./experimental_task/experimental_task.gif" alt="image" width="700" height="auto">
 
 [Watch the full video on SWITCHtube](https://tube.switch.ch/videos/2otCdMkJpF)
+
+## Performance development according to integrating prior knowledge about serve probabilities in the congruent and incongruent cases
+Development of correct response rate and hit rate over all blocks with a probability of 20% in the incongruent case to one side and 80% in the congruent case to the other side. While players increased performance in the congruent played serves, they decreased in the incongruent played serves.
+|                                                              Correct response rats                                                              |                                                              hit rate                                                              |
+| :------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------: |
+| <img src="./plots/sqrt_correct_response_rate.svg" alt="Correct response rates" style="width:350px;height:auto;"> | <img src="./plots/sqrt_hit_rate.svg" alt="hit rate" style="width:350px;height:auto;"> |
+
+## Weight shift over a return
+<img src="./plots/prior_impact_over_second_half_of_biased_and_neutral_trials_on_weight_shift.png" style="width:850px;height:auto;">
 
 ## Repository structure 
 
@@ -50,13 +58,4 @@ The data file all_data in [data](./data) is structured as follows:
 | side_tendency_990                        |    weight shift (positive means to the left)   |
 | side_tendency_995                        |    weight shift (positive means to the left)   |
 | side_tendency_100                        |   weight shift (positive means to the left)    |
-
-## Performance development according to integrating prior knowledge about serve probabilities in the congruent and incongruent cases
-Development of correct response rate and hit rate over all blocks with a probability of 20% in the incongruent case to one side and 80% in the congruent case to the other side. While players increased performance in the congruent played serves, they decreased in the incongruent played serves.
-|                                                              Correct response rats                                                              |                                                              hit rate                                                              |
-| :------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------: |
-| <img src="./plots/sqrt_correct_response_rate.svg" alt="Correct response rates" style="width:350px;height:auto;"> | <img src="./plots/sqrt_hit_rate.svg" alt="hit rate" style="width:350px;height:auto;"> |
-
-## Weight shift over a return
-<img src="./plots/prior_impact_over_second_half_of_biased_and_neutral_trials_on_weight_shift.png" style="width:450px;height:auto;">
 
