@@ -1,31 +1,62 @@
 # anticipatory_behaviour_in_vr_tennis_a_bayesian_perspective
-This is the repository for our work “*From simple lab tasks to the virtual court: Bayesian integration in tennis*” containing data and code used for the data analysis and visualisation.
+This is the repository for our work “*Tennis players exploit prior information to improve performance: evidence for continuous anticipatory decision-making*” containing data and code used for the data analysis, the experimental protocols, c3d files of a 21 skeleton model of each return of each tennis player, and visualisation.
 
-We developed an immersive VR tennis environment. In two experiments, we tested how participants integrate prior and sensory information when returning tennis serves. As an indicator of their estimation of the ball-bounce location, we analysed predictive gaze behaviour.
+We developed an immersive VR tennis environment, where we tested how tennis players exploit prior knowledge to improve performance und continuous decision-making when returning tennis serves.
 
 <img src="./experimental_task/experimental_task.gif" alt="image" width="700" height="auto">
+
 [Watch the full video on SWITCHtube](https://tube.switch.ch/videos/2otCdMkJpF)
 
-## Descriptive Analysis 
+## Repository structure 
 
-The folders [descriptive_all_trials_exp_1](./descriptive_all_trials_exp_1) and [descriptive_all_trials_exp_2](./descriptive_all_trials_exp_2) contain the dataset, R script and R studio project to reproduce the calculations of all descriptive statistics and plots (Figure 3 left) for Experiments 1 and 2 respectively.
-|                                                              Experiment 1                                                              |                                                              Experiment 2                                                              |
+The folders [c3d_files](./c3d_files) contain from every trial of each tennis player a c3d file with a 21 point full body model and the mokka software to visualise the c3d files. The R script is in the folder [code](./code), all the data used for the analysis is stored in a csv file in the folder [data](./data), each individual experimental protocol can be find in [experimental_protocols](./experimental_protocols), a video of the experimental task can be watched on [Watch the full video on SWITCHtube](https://tube.switch.ch/videos/2otCdMkJpF) or an excerpt in the folder [experimental_task](./experimental_task), all the plots are in [plots](./plots), and there is the R studio project to reproduce the calculations of all statistical analyses and plots production. The experimental_protocols comes in separate spread sheet files (in xlsx format), which are structured as follows:
+
+
+
+|       Column name       | Description                        |
+|--------------|--------------------------|
+| session      | name of the session       |
+| block        | block ID                  |
+| trial        | trial number              |
+| left_right   | side played (left/right)  |
+
+The data file all_data in [data](./data) is structured as follows:
+| Column name                             | Description  |
+|------------------------------------------|-------|
+| vp                                       |  player     |
+| trial                                    |    trial number   |
+| condition                                |   warm up/neutral/congruent/incongruent    |
+| side_played                              |    left/right   |
+| correct_response                         |   1 = true, 0 = false    |
+| hit_true_false                           |    1 = true, 0 = false   |
+| serve_time                               |   time in relation to the serve    |
+| bounce_time                              |   time in relation to the serve    |
+| hit_time                                 |   time in relation to the serve    |
+| splitstep_performed_com_5cm_below_max     |   1 = true, 0 = false    |
+| splitstep_start                          |   time in relation to the serve    |
+| lateral_movement_initiation               |   time in relation to the serve    |
+| side_tendency_minus_200                  |   weight shift (positive means to the left)    |
+| side_tendency_minus_195                  |   weight shift (positive means to the left)    |
+| side_tendency_minus_190                  |   weight shift (positive means to the left)    |
+| .                  |   .    |
+| .                  |   .    |
+| .                  |   .    |
+| side_tendency_minus_005                  |   weight shift (positive means to the left)    |
+| side_tendency_000                        |   weight shift (positive means to the left)    |
+| side_tendency_005                        |   weight shift (positive means to the left)    |
+| .                        |   .    |
+| .                        |   .    |
+| .                        |   .    |
+| side_tendency_990                        |    weight shift (positive means to the left)   |
+| side_tendency_995                        |    weight shift (positive means to the left)   |
+| side_tendency_100                        |   weight shift (positive means to the left)    |
+
+## Performance development according to integrating prior knowledge about serve probabilities in the congruent and incongruent cases
+Development of correct response rate and hit rate over all blocks with a probability of 20% in the incongruent case to one side and 80% in the congruent case to the other side. While players increased performance in the congruent played serves, they decreased in the incongruent played serves.
+|                                                              Correct response rats                                                              |                                                              hit rate                                                              |
 | :------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------: |
-| <img src="./descriptive_all_trials_exp_1/plots/final_exp_1.svg" alt="Experiment 1: last four blocks" style="width:350px;height:auto;"> | <img src="./descriptive_all_trials_exp_2/plots/final_exp_2.svg" alt="Experiment 2: last four blocks" style="width:350px;height:auto;"> |
+| <img src="./plots/sqrt_correct_response_rate.svg" alt="Correct response rates" style="width:350px;height:auto;"> | <img src="./plots/sqrt_hit_rate.svg" alt="hit rate" style="width:350px;height:auto;"> |
 
-The dataset comes in separate spread sheet files (in xlsx format), which are structured as follows:
+## Weight shift over a return
+<img src="./plots/prior_impact_over_second_half_of_biased_and_neutral_trials_on_weight_shift.png" style="width:450px;height:auto;">
 
-
-
-| index   	| block  	| y  	|
-|---	|---	|---	|
-| participant ID   	| block ID  	| difference between participants’ ball bounce estimations (gaze location or explicit judgement) and the actual bounce location when experiencing the right vs. the left distribution (&Delta;right - &Delta;left) (our main dependent variable) |
-
-
-## Multilevel Analysis 
-
-The folder [multilevel_analysis](./multilevel_analysis) contains the dataset, R script and R studio project to reproduce the calculations of all inferential statistics and plots (Figure 3 right) for Experiment 1 and 2 respectively.
-
-|                                                            Experiment 1                                                             |                                                            Experiment 2                                                             |
-| :---------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------: |
-| <img src="./multilevel_analysis/plots/final_exp_1.svg" alt="Experiment 1: Gaze Shift Differences" style="width:350px;height:auto;"> | <img src="./multilevel_analysis/plots/final_exp_2.svg" alt="Experiment 2: Gaze Shift Differences" style="width:350px;height:auto;"> |

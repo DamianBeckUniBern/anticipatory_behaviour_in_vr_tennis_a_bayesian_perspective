@@ -260,8 +260,8 @@ plot <- ggplot(hit_rates_all, aes(x = trial_number, y = hit_rate, color = condit
     legend.text = element_text(size = 12)
   )
 plot
-ggsave("plots/hit_rate.svg", plot, width = 9, height = 6)
-ggsave("plots/hit_rate.png", plot, width = 9, height = 6)
+ggsave("plots/sqrt_hit_rate.svg", plot, width = 9, height = 6)
+ggsave("plots/sqrt_hit_rate.png", plot, width = 9, height = 6)
 
 
 
@@ -324,8 +324,8 @@ plot <- ggplot(correct_response_rates_all, aes(x = trial_number, y = correct_res
     legend.text = element_text(size = 12)
   )
 plot
-ggsave("plots/sqrt_correct_response_rates.svg", plot, width = 9, height = 6)
-ggsave("plots/sqrt_correct_response_rates.png", plot, width = 9, height = 6)
+ggsave("plots/sqrt_correct_response_rate.svg", plot, width = 9, height = 6)
+ggsave("plots/sqrt_correct_response_rate.png", plot, width = 9, height = 6)
 
 
 
@@ -434,7 +434,7 @@ for (i in seq(-200, 1000, by = 5)) {
 
 
 data_tendency_neutral <- data_neutral 
-for (i in 36:276) {data_tendency_neutral[,i] <- ifelse(data_tendency_neutral$side_played == "left", -data_tendency_neutral[,i], data_tendency_neutral[,i])}
+for (i in 13:253) {data_tendency_neutral[,i] <- ifelse(data_tendency_neutral$side_played == "left", -data_tendency_neutral[,i], data_tendency_neutral[,i])}
 
 data_tendency_neutral_correct <- data_tendency_neutral %>%
   filter(condition == "neutral", correct_response == 1)
