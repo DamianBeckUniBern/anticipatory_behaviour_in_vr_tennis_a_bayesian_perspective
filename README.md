@@ -8,10 +8,22 @@ We developed an immersive VR tennis environment, where we tested how tennis play
 
 ## Performance development according to integrating prior knowledge about serve probabilities in the congruent and incongruent cases
 Development of correct response rate and hit rate over all blocks with a probability of 20% in the incongruent case to one side and 80% in the congruent case to the other side. While players increased performance in the congruent played serves, they decreased in the incongruent played serves.
-|                                                              Correct response rats                                                              |                                                              hit rate                                                              |
-| :------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------: |
-| <img src="./plots/sqrt_correct_response_rate.svg" alt="Correct response rates" style="width:350px;height:auto;"> | <img src="./plots/sqrt_hit_rate.svg" alt="hit rate" style="width:350px;height:auto;"> |
-Figure 1 Development of tennis player’s correct response rate (left) to go the correct side and hit rate (right) during the experiment. The congruent trials were played with an 80% chance and the incongruent with a 20% chance. The trials before were played with a 50% chance on both sides, such as they started with a neutral prior. We took the root of the trial number as the regression predictor according the exponential law of practice (Heathcote & Brown, 2000). The uncertainty area represents a 95% confidence interval of the regression lines.
+<table style="table-layout: fixed; width: 100%;">
+  <tr>
+    <th style="width: 50%;">Correct response rates</th>
+    <th style="width: 50%;">Hit rate</th>
+  </tr>
+  <tr>
+    <td style="text-align: center;">
+      <img src="./plots/sqrt_correct_response_rate.svg" alt="Correct response rates" style="width:350px;height:auto;">
+    </td>
+    <td style="text-align: center;">
+      <img src="./plots/sqrt_hit_rate.svg" alt="hit rate" style="width:350px;height:auto;">
+    </td>
+  </tr>
+</table>
+
+<p>Figure 1 Development of tennis player’s correct response rate (left) to go the correct side and hit rate (right) during the experiment. The congruent trials were played with an 80% chance and the incongruent with a 20% chance. The trials before were played with a 50% chance on both sides, such as they started with a neutral prior. We took the root of the trial number as the regression predictor according the exponential law of practice (Heathcote & Brown, 2000). The uncertainty area represents a 95% confidence interval of the regression lines.</p>
 ## Weight shift over a return
 <img src="./plots/prior_impact_over_second_half_of_biased_and_neutral_trials_on_weight_shift.png" style="width:850px;height:auto;">
 
