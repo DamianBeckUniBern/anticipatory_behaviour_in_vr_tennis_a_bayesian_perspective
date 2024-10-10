@@ -2,11 +2,23 @@
 # VR-Tennis
 
 # Author: Damian Beck
-# Date: July 2024
+# Date: Octobtre 2024
 # Based on r version 4.3.2
 #---------------------------------------------------------------
-
-# Libraries ----
+#Content
+#The script is structured as follows:
+#1. Libraries
+#2. Functions
+#3. Import data
+#4. Data preparation
+#5. Calculate descriptive statistics and split step actions
+#6. Mean development of side tendency over time (weight shift dynamics)
+#7. Lateral movement direction
+#8. Hitting performance
+#9. Performance prediction
+#
+#---------------------------------------------------------------
+#1. Libraries ----
 #---------------------------------------------------------------
 #install packages recommended by Field (2012)
 #install.packages("car", dependencies = TRUE)
@@ -38,7 +50,7 @@ library(lme4)
 library(lmtest)
 
 
-# Functions ----
+#2. Functions ----
 #---------------------------------------------------------------
 # Define the function detect and remove outliers with Cook's distance
 remove_outliers <- function(data, model, cook_threshold) {
@@ -82,14 +94,17 @@ remove_1d_mahalanobis_outliers <- function(data, threshold = 1) {
 
 
 
-# Import data ----
+#3. Import data ----
 #---------------------------------------------------------------
 data_all <- read.csv("data/all_data.csv", header = TRUE, sep = ",")
 View(data_all)
 summary(data_all)
 
-# Data preparation ----
+#4. Data preparation ----
 #---------------------------------------------------------------
+#change columns from side_tendency_minus_200 until to side_tendency_1000 from m to cm
+for (i in 13:253) {data_all[,i] <- data_all[,i] *100}
+
 #change True->1 and False->0 for the column of hit_true_false
 data_all$correct_response <- ifelse(data_all$correct_response == "1", 1,
                                     ifelse(data_all$correct_response == "0", 0,
@@ -154,7 +169,7 @@ data_all$trial_number <- data_all$congruent_number + data_all$incongruent_number
 #have a look at the data
 View(data_all)
 
-#Calculate descriptive statistics ----
+#5. Calculate descriptive statistics and split step actions ----
 #---------------------------------------------------------------
 #filter data_all for hit == TRUE and left_or_right == "left" and "right"
 data_all_left_hit <- filter(data_all, hit_true_false == 1 & side_played == "left")
@@ -210,127 +225,7 @@ summary(data_all_hit_time)
 mean(data_all_hit_time)
 sd(data_all_hit_time)
 
-#Calculate hit rates ----
-#---------------------------------------------------------------
-#calculate hit rates for first session
-#count all TRUE values for each trial number and condition
-hit_rates_all <- data_all %>%
-  group_by(trial_number, condition) %>%
-  summarise(hit_rate = sum(hit_true_false == 1)/(sum(hit_true_false == 1)+sum(hit_true_false == 0)))
-
-#multiply the hit rates with 100 in order to have % values
-hit_rates_all$hit_rate <- hit_rates_all$hit_rate * 100
-
-#make a new coloumn condition_dummy_code with 0 for congruent and 1 for incongruent
-hit_rates_all$condition_dummy_code <- ifelse(hit_rates_all$condition == "congruent", 1, 0)
-
-#have a look at the hit rates
-View(hit_rates_all)
-
-
-#Regression analysis of hit rate---
-#---------------------------------------------------------------
-#delete rows with trial number 0 (neutral trials)
-hit_rates_all <- hit_rates_all[hit_rates_all$trial_number != 0,]
-
-#sqrt transformation of trial number
-hit_rate_sqrt <- lm(hit_rate ~ sqrt(trial_number) + condition_dummy_code + sqrt(trial_number)*condition_dummy_code, 
-                        data = hit_rates_all,
-                        method = "qr",
-                        na.action = na.exclude)
-tab_model(hit_rate_sqrt)
-summary(hit_rate_sqrt)
-
-#plot the hit rates
-plot <- ggplot(hit_rates_all, aes(x = trial_number, y = hit_rate, color = condition)) +
-  geom_point() +
-  geom_smooth(method = "lm",formula = y~sqrt(x), se = TRUE, level = 0.95, fullrange = TRUE)+
-  labs(title = "",
-       x = "trial number (#)",
-       y = "hit rate (%)")+
-  theme(
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.background = element_blank(),
-    axis.line = element_line(color = "black"),
-    axis.text = element_text(size = 12),
-    axis.title = element_text(size = 14, face = "bold"),
-    legend.position = "right",
-    legend.title = element_blank(),
-    legend.text = element_text(size = 12)
-  )
-plot
-ggsave("plots/sqrt_hit_rate.svg", plot, width = 9, height = 6)
-ggsave("plots/sqrt_hit_rate.png", plot, width = 9, height = 6)
-
-
-
-#Calculate correct response rates ----
-#---------------------------------------------------------------
-#calculate correct response rate for first session
-#count all TRUE values for each trial number and condition
-correct_response_rates_all <- data_all %>%
-  group_by(trial_number, condition) %>%
-  summarise(correct_response_rate = sum(correct_response == 1)/(sum(correct_response == 1)+sum(correct_response == 0)))
-
-#multiply the hit rates with 100 in order to have % values
-correct_response_rates_all$correct_response_rate <- correct_response_rates_all$correct_response_rate * 100
-
-#duplicate the row with condition neutral and trial number 0
-correct_response_rates_all <- rbind(correct_response_rates_all, correct_response_rates_all[correct_response_rates_all$condition == "neutral" & correct_response_rates_all$trial_number == 0,])
-
-#change the first entry of condition with "neutral" to "congruent" and the second to "incongruent"
-correct_response_rates_all$condition[correct_response_rates_all$condition == "neutral"][1] <- "congruent"
-correct_response_rates_all$condition[correct_response_rates_all$condition == "neutral"] <- "incongruent"
-
-
-#make a new coloumn condition_dummy_code with 0 for congruent and 1 for incongruent
-correct_response_rates_all$condition_dummy_code <- ifelse(correct_response_rates_all$condition == "congruent", 1, 0)
-
-#have a look at the hit rates
-View(correct_response_rates_all)
-
-
-#Regression analysis of correct response rate---
-#---------------------------------------------------------------
-#delete rows with trial number 0 (neutral trials
-correct_response_rates_all <- correct_response_rates_all[correct_response_rates_all$trial_number != 0,]
-
-#sqrt transformation of trial number
-correct_response_rate_sqrt <- lm(correct_response_rate ~ sqrt(trial_number) + condition_dummy_code + sqrt(trial_number)*condition_dummy_code, 
-                        data = correct_response_rates_all,
-                        method = "qr",
-                        na.action = na.exclude)
-tab_model(correct_response_rate_sqrt)
-summary(correct_response_rate_sqrt)
-
-
-#plot the correct response rates
-plot <- ggplot(correct_response_rates_all, aes(x = trial_number, y = correct_response_rate, color = condition)) +
-  geom_point() +
-  geom_smooth(method = "lm",formula = y~sqrt(x), se = TRUE, level = 0.95, fullrange = TRUE)+
-  labs(title = "",
-       x = "trial number (#)",
-       y = "correct response rate (%)")+
-  theme(
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.background = element_blank(),
-    axis.line = element_line(color = "black"),
-    axis.text = element_text(size = 12),
-    axis.title = element_text(size = 14, face = "bold"),
-    legend.position = "right",
-    legend.title = element_blank(),
-    legend.text = element_text(size = 12)
-  )
-plot
-ggsave("plots/sqrt_correct_response_rate.svg", plot, width = 9, height = 6)
-ggsave("plots/sqrt_correct_response_rate.png", plot, width = 9, height = 6)
-
-
-
-
-#mean development of side tendency over time ---
+#6. Mean development of side tendency over time (weight shift dynamics) ----
 #---------------------------------------------------------------
 #filter data all such that only congruent with correct response = 1
 data_tendency <- data_all %>%
@@ -348,11 +243,11 @@ data_tendency_incongruent_incorrect <- data_tendency %>%
   filter(condition == "incongruent", correct_response == 0)
 
 
-time_values <- seq(from = -200, to = 1000, by = 5)
+time_values <- seq(from = -100, to = 1000, by = 5)
 
 side_tendency_congruent_correct <- numeric()
 
-for (i in seq(-200, 1000, by = 5)) {
+for (i in seq(-100, 1000, by = 5)) {
   # Format the number with three digits, preserving the minus sign if present
   formatted_number <- sprintf("%03d", abs(i))
   column_name <- paste0("side_tendency_", ifelse(i < 0, "minus_", ""), formatted_number)
@@ -372,7 +267,7 @@ for (i in seq(-200, 1000, by = 5)) {
 
 side_tendency_incongruent_correct <- numeric()
 
-for (i in seq(-200, 1000, by = 5)) {
+for (i in seq(-100, 1000, by = 5)) {
   # Format the number with three digits, preserving the minus sign if present
   formatted_number <- sprintf("%03d", abs(i))
   column_name <- paste0("side_tendency_", ifelse(i < 0, "minus_", ""), formatted_number)
@@ -393,7 +288,7 @@ for (i in seq(-200, 1000, by = 5)) {
 
 side_tendency_congruent_incorrect <- numeric()
 
-for (i in seq(-200, 1000, by = 5)) {
+for (i in seq(-100, 1000, by = 5)) {
   # Format the number with three digits, preserving the minus sign if present
   formatted_number <- sprintf("%03d", abs(i))
   column_name <- paste0("side_tendency_", ifelse(i < 0, "minus_", ""), formatted_number)
@@ -414,7 +309,7 @@ for (i in seq(-200, 1000, by = 5)) {
 
 side_tendency_incongruent_incorrect <- numeric()
 
-for (i in seq(-200, 1000, by = 5)) {
+for (i in seq(-100, 1000, by = 5)) {
   # Format the number with three digits, preserving the minus sign if present
   formatted_number <- sprintf("%03d", abs(i))
   column_name <- paste0("side_tendency_", ifelse(i < 0, "minus_", ""), formatted_number)
@@ -441,11 +336,11 @@ data_tendency_neutral_correct <- data_tendency_neutral %>%
 data_tendency_neutral_incorrect <- data_tendency_neutral %>%
   filter(condition == "neutral", correct_response == 0)
 
-time_values <- seq(from = -200, to = 1000, by = 5)
+time_values <- seq(from = -100, to = 1000, by = 5)
 
 side_tendency_neutral_correct <- numeric()
 
-for (i in seq(-200, 1000, by = 5)) {
+for (i in seq(-100, 1000, by = 5)) {
   # Format the number with three digits, preserving the minus sign if present
   formatted_number <- sprintf("%03d", abs(i))
   column_name <- paste0("side_tendency_", ifelse(i < 0, "minus_", ""), formatted_number)
@@ -465,7 +360,7 @@ for (i in seq(-200, 1000, by = 5)) {
 
 side_tendency_neutral_incorrect <- numeric()
 
-for (i in seq(-200, 1000, by = 5)) {
+for (i in seq(-100, 1000, by = 5)) {
   # Format the number with three digits, preserving the minus sign if present
   formatted_number <- sprintf("%03d", abs(i))
   column_name <- paste0("side_tendency_", ifelse(i < 0, "minus_", ""), formatted_number)
@@ -508,74 +403,78 @@ neutral_incorrect <- data.frame(
   side_tendency = side_tendency_neutral_incorrect)
 
 
-ggplot() +
+# Plot the mean development of side tendency over time
+plot <- ggplot() +
   geom_line(data = congruent_correct, 
-            aes(x = time, y = side_tendency, color = "Congruent correct response", linetype = "Congruent correct response")) +
-  geom_line(data = incongruent_correct, 
-            aes(x = time, y = side_tendency, color = "Incongruent correct response", linetype = "Incongruent correct response")) +
+            aes(x = time, y = side_tendency, color = "Congruent/Correct", linetype = "Congruent/Correct")) +
   geom_line(data = congruent_incorrect, 
-            aes(x = time, y = side_tendency, color = "Congruent incorrect response", linetype = "Congruent incorrect response")) +
+            aes(x = time, y = side_tendency, color = "Congruent/Incorrect", linetype = "Congruent/Incorrect")) +
+  geom_line(data = incongruent_correct, 
+            aes(x = time, y = side_tendency, color = "Incongruent/Correct", linetype = "Incongruent/Correct")) +
   geom_line(data = incongruent_incorrect, 
-            aes(x = time, y = side_tendency, color = "Incongruent incorrect response", linetype = "Incongruent incorrect response")) +
+            aes(x = time, y = side_tendency, color = "Incongruent/Incorrect", linetype = "Incongruent/Incorrect")) +
   geom_line(data = neutral_correct, 
-            aes(x = time, y = side_tendency, color = "Neutral correct response", linetype = "Neutral correct response")) +
+            aes(x = time, y = side_tendency, color = "Neutral/Correct", linetype = "Neutral/Correct")) +
   geom_line(data = neutral_incorrect, 
-            aes(x = time, y = side_tendency, color = "Neutral incorrect response", linetype = "Neutral incorrect response")) +
+            aes(x = time, y = side_tendency, color = "Neutral/Incorrect", linetype = "Neutral/Incorrect")) +
   
-  # Add vertical black lines at x = 0, 466, 570, and 990
-  geom_vline(xintercept = 0, color = "black", linetype = "solid") +
-  geom_vline(xintercept = 466, color = "black", linetype = "solid") +
-  geom_vline(xintercept = 570, color = "black", linetype = "solid") +
-  geom_vline(xintercept = 990, color = "black", linetype = "solid") +  # "Return"
+  # Add vertical black lines at key x positions
+  geom_vline(xintercept = c(0, 466, 570, 990), color = "black", linetype = "solid") +
   
-  # Add annotations for the vertical lines with a much lower y position for "Lateral movement initiation"
-  annotate("text", x = 0, y = max(neutral_correct$side_tendency) + 0.01, 
-           label = "Serve", angle = 90, vjust = -0.5, hjust = 0) +
-  annotate("text", x = 466, y = max(neutral_correct$side_tendency) - 0.02, 
-           label = "Bounce", angle = 90, vjust = -0.5, hjust = 0) +
-  annotate("text", x = 570, y = min(neutral_correct$side_tendency) + 0.47,  # Lowered y position even more
-           label = "Lateral movement initiation", angle = 90, vjust = -0.6, hjust = 0) +
-  annotate("text", x = 990, y = max(neutral_correct$side_tendency) - 0.00 , 
-           label = "Return", angle = 90, vjust = -0.5, hjust = 0) +
+  # Add annotations for the vertical lines
+  annotate("text", x = 0, y = 100, 
+           label = "Serve", angle = 90, vjust = -0.5, hjust = 0.1) +
+  annotate("text", x = 466, y = 100, 
+           label = "Bounce", angle = 90, vjust = -0.5, hjust = 0.3) +
+  annotate("text", x = 570, y = 100,  
+           label = "Lateral movement initiation", angle = 90, vjust = -0.5, hjust = 0.8) +
+  annotate("text", x = 990, y = 100, 
+           label = "Return", angle = 90, vjust = -0.5, hjust = 0.2) +
   
-  # Define color mapping
+  # Define color and linetype mappings
   scale_color_manual(values = c(
-    "Congruent correct response" = "blue", 
-    "Incongruent correct response" = "red", 
-    "Congruent incorrect response" = "blue", 
-    "Incongruent incorrect response" = "red",
-    "Neutral correct response" = "green",
-    "Neutral incorrect response" = "green"
+    "Congruent/Correct" = "blue", 
+    "Congruent/Incorrect" = "blue", 
+    "Incongruent/Correct" = "red", 
+    "Incongruent/Incorrect" = "red",
+    "Neutral/Correct" = "green",
+    "Neutral/Incorrect" = "green"
   )) +
   
-  # Define linetype mapping
   scale_linetype_manual(values = c(
-    "Congruent correct response" = "solid", 
-    "Incongruent correct response" = "solid", 
-    "Congruent incorrect response" = "dashed", 
-    "Incongruent incorrect response" = "dashed",
-    "Neutral correct response" = "solid",
-    "Neutral incorrect response" = "dashed"
+    "Congruent/Correct" = "solid", 
+    "Congruent/Incorrect" = "dashed", 
+    "Incongruent/Correct" = "solid", 
+    "Incongruent/Incorrect" = "dashed",
+    "Neutral/Correct" = "solid",
+    "Neutral/Incorrect" = "dashed"
   )) +
   
   labs(
     title = "", 
-    x = "Time to serve (ms)", 
-    y = "Weight shift in direction to the prior (m)", 
+    x = "Time to Serve (ms)", 
+    y = "Weight Shift (cm)", 
     color = "Condition", 
     linetype = "Condition"
   ) +
   
   theme_minimal() +
   theme(
-    legend.position = "right",   # Move legend to the right
-    panel.grid = element_blank(),  # Remove grid lines
-    axis.line = element_line(),    # Add axis lines
-    axis.ticks = element_line()
+    legend.position = "right",   
+    panel.grid = element_blank(),  
+    axis.line = element_line(),    
+    axis.ticks = element_line(),
+    text = element_text(size = 26),         
+    axis.text = element_text(size = 26),    
+    axis.title = element_text(size = 26),   
+    legend.text = element_text(size = 26),  
+    legend.title = element_text(size = 26)  
   )
 
 
-save_plot("plots/prior_impact_over_second_half_of_biased_and_neutral_trials_on_weight_shift.png", width = 20, height = 12)
+plot
+ggsave("plots/prior_impact_over_second_half_of_biased_and_neutral_trials_on_weight_shift.png", device = "png", width = 20, height = 12)
+ggsave("plots/prior_impact_over_second_half_of_biased_and_neutral_trials_on_weight_shift.svg", device = "svg", width = 20, height = 12)
 
 
 
@@ -631,77 +530,41 @@ hist(residuals(intercept_only_minus_100))
 
 anova(intercept_only_minus_100, intercept_only_minus_100_rI)
 
-#100
+#200
 #Outlier detection with cooks distance 
 #if more than 3 times more influential than an average point
-mean_sessions_100 <- lm(side_tendency_100 ~ 1, 
+mean_sessions_200 <- lm(side_tendency_200 ~ 1, 
                         data = data_directed_prior_second_half, 
                         na.action = na.omit)
-summary(mean_sessions_100)
-tab_model(mean_sessions_100)
-data_directed_prior_second_half_mean <- remove_outliers(data_directed_prior_second_half,mean_sessions_100,3)
+summary(mean_sessions_200)
+tab_model(mean_sessions_200)
+data_directed_prior_second_half_mean <- remove_outliers(data_directed_prior_second_half,mean_sessions_200,3)
 summary(data_directed_prior_second_half_mean)
 
 #according to Field (2013) hierarchical model comparison
 #intercept only
-intercept_only_100 <- nlme::gls(side_tendency_100 ~ 1, 
+intercept_only_200 <- nlme::gls(side_tendency_200 ~ 1, 
                                 data = data_directed_prior_second_half_mean,
                                 method = "ML",
                                 na.action = na.exclude)
-tab_model(intercept_only_100)
+tab_model(intercept_only_200)
 
-intercept_only_100_rI <- nlme::lme(side_tendency_100 ~ 1, 
+intercept_only_200_rI <- nlme::lme(side_tendency_200 ~ 1, 
                                    data = data_directed_prior_second_half_mean,
                                    random = ~1|vp,
                                    method = "ML",
                                    na.action = na.exclude)
-tab_model(intercept_only_100_rI)
-summary(intercept_only_100_rI)
+tab_model(intercept_only_200_rI)
+summary(intercept_only_200_rI)
 
 #check assumptions of linear regression
 #check for normality of residuals
-plot(residuals(intercept_only_100))
-qqnorm(residuals(intercept_only_100))
-qqline(residuals(intercept_only_100))
-hist(residuals(intercept_only_100))
+plot(residuals(intercept_only_200))
+qqnorm(residuals(intercept_only_200))
+qqline(residuals(intercept_only_200))
+hist(residuals(intercept_only_200))
 
-anova(intercept_only_100, intercept_only_100_rI)
-
-#300
-#Outlier detection with cooks distance 
-#if more than 3 times more influential than an average point
-mean_sessions_300 <- lm(side_tendency_300 ~ 1, 
-                        data = data_directed_prior_second_half, 
-                        na.action = na.omit)
-summary(mean_sessions_300)
-tab_model(mean_sessions_300)
-data_directed_prior_second_half_mean <- remove_outliers(data_directed_prior_second_half,mean_sessions_300,3)
-summary(data_directed_prior_second_half_mean)
-
-#according to Field (2013) hierarchical model comparison
-#intercept only
-intercept_only_300 <- nlme::gls(side_tendency_300 ~ 1, 
-                                data = data_directed_prior_second_half_mean,
-                                method = "ML",
-                                na.action = na.exclude)
-tab_model(intercept_only_300)
-
-intercept_only_300_rI <- nlme::lme(side_tendency_300 ~ 1, 
-                                   data = data_directed_prior_second_half_mean,
-                                   random = ~1|vp,
-                                   method = "ML",
-                                   na.action = na.exclude)
-tab_model(intercept_only_300_rI)
-summary(intercept_only_300_rI)
-
-#check assumptions of linear regression
-#check for normality of residuals
-plot(residuals(intercept_only_300))
-qqnorm(residuals(intercept_only_300))
-qqline(residuals(intercept_only_300))
-hist(residuals(intercept_only_300))
-
-anova(intercept_only_300, intercept_only_300_rI)
+anova(intercept_only_200, intercept_only_200_rI)
 
 #500
 #Outlier detection with cooks distance 
@@ -744,16 +607,286 @@ anova(intercept_only_500, intercept_only_500_rI)
 
 
 
+#with neutral data
+data_neutral_mean <- data_tendency_neutral #towards ball played
 
-#logistic regression of direction taken with the predictor weight shift at -100, 100, 300, 500
+
+#minus_100
+#Outlier detection with cooks distance 
+#if more than 3 times more influential than an average point
+mean_sessions_minus_100_neutral <- lm(side_tendency_minus_100 ~ 1, 
+                              data = data_neutral_mean, 
+                              na.action = na.omit)
+summary(mean_sessions_minus_100_neutral)
+tab_model(mean_sessions_minus_100_neutral)
+data_neutral_minus_100 <- remove_outliers(data_neutral_mean,mean_sessions_minus_100_neutral,3)
+summary(data_neutral_minus_100)
+
+#according to Field (2013) hierarchical model comparison
+#intercept only
+intercept_only_minus_100_neutral <- nlme::gls(side_tendency_minus_100 ~ 1, 
+                                      data = data_neutral_minus_100,
+                                      method = "ML",
+                                      na.action = na.exclude)
+tab_model(intercept_only_minus_100_neutral)
+
+intercept_only_minus_100_rI_neutral <- nlme::lme(side_tendency_minus_100 ~ 1, 
+                                         data = data_neutral_minus_100,
+                                         random = ~1|vp,
+                                         method = "ML",
+                                         na.action = na.exclude)
+tab_model(intercept_only_minus_100_rI_neutral)
+summary(intercept_only_minus_100_rI_neutral)
+
+#check assumptions of linear regression
+#check for normality of residuals
+plot(residuals(intercept_only_minus_100_neutral))
+qqnorm(residuals(intercept_only_minus_100_neutral))
+qqline(residuals(intercept_only_minus_100_neutral))
+hist(residuals(intercept_only_minus_100_neutral))
+
+anova(intercept_only_minus_100_neutral, intercept_only_minus_100_rI_neutral)
+
+#200
+#Outlier detection with cooks distance 
+#if more than 3 times more influential than an average point
+mean_sessions_200_neutral <- lm(side_tendency_200 ~ 1, 
+                                data = data_neutral_mean, 
+                                na.action = na.omit)
+summary(mean_sessions_200_neutral)
+tab_model(mean_sessions_200_neutral)
+data_neutral_200 <- remove_outliers(data_neutral_mean,mean_sessions_200_neutral,3)
+summary(data_neutral_200)
+
+#according to Field (2013) hierarchical model comparison
+#intercept only
+intercept_only_200_neutral <- nlme::gls(side_tendency_200 ~ 1, 
+                                        data = data_neutral_200,
+                                        method = "ML",
+                                        na.action = na.exclude)
+tab_model(intercept_only_200_neutral)
+
+intercept_only_200_rI_neutral <- nlme::lme(side_tendency_200 ~ 1, 
+                                           data = data_neutral_200,
+                                           random = ~1|vp,
+                                           method = "ML",
+                                           na.action = na.exclude)
+tab_model(intercept_only_200_rI_neutral)
+summary(intercept_only_200_rI_neutral)
+
+#check assumptions of linear regression
+#check for normality of residuals
+plot(residuals(intercept_only_200_neutral))
+qqnorm(residuals(intercept_only_200_neutral))
+qqline(residuals(intercept_only_200_neutral))
+hist(residuals(intercept_only_200_neutral))
+
+anova(intercept_only_200_neutral, intercept_only_200_rI_neutral)
+
+#check classic method (just for fun)
+data_neutral_200_check <- aggregate(data_neutral_200$side_tendency_200, by = list(data_neutral_200$vp), FUN = mean)
+View(data_neutral_200_check)
+check_regression <- nlme::gls(x ~ 1, 
+                              data = data_neutral_200_check,
+                              method = "ML",
+                              na.action = na.exclude)
+tab_model(check_regression)
+
+#500
+#Outlier detection with cooks distance 
+#if more than 3 times more influential than an average point
+mean_sessions_500_neutral <- lm(side_tendency_500 ~ 1, 
+                                data = data_neutral_mean, 
+                                na.action = na.omit)
+summary(mean_sessions_500_neutral)
+tab_model(mean_sessions_500_neutral)
+data_neutral_500 <- remove_outliers(data_neutral_mean,mean_sessions_500_neutral,3)
+summary(data_neutral_500)
+
+#according to Field (2013) hierarchical model comparison
+#intercept only
+intercept_only_500_neutral <- nlme::gls(side_tendency_500 ~ 1, 
+                                        data = data_neutral_500,
+                                        method = "ML",
+                                        na.action = na.exclude)
+tab_model(intercept_only_500_neutral)
+
+intercept_only_500_rI_neutral <- nlme::lme(side_tendency_500 ~ 1, 
+                                           data = data_neutral_500,
+                                           random = ~1|vp,
+                                           method = "ML",
+                                           na.action = na.exclude)
+tab_model(intercept_only_500_rI_neutral)
+summary(intercept_only_500_rI_neutral)
+
+#check assumptions of linear regression
+#check for normality of residuals
+plot(residuals(intercept_only_500_neutral))
+qqnorm(residuals(intercept_only_500_neutral))
+qqline(residuals(intercept_only_500_neutral))
+hist(residuals(intercept_only_500_neutral))
+
+anova(intercept_only_500_neutral, intercept_only_500_rI_neutral)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#7. Lateral movement direction ----
+#---------------------------------------------------------------
+#calculate correct response rate for first session
+#count all TRUE values for each trial number and condition
+correct_response_rates_all <- data_all %>%
+  group_by(trial_number, condition) %>%
+  summarise(correct_response_rate = sum(correct_response == 1)/(sum(correct_response == 1)+sum(correct_response == 0)))
+
+#multiply the hit rates with 100 in order to have % values
+correct_response_rates_all$correct_response_rate <- correct_response_rates_all$correct_response_rate * 100
+
+#duplicate the row with condition neutral and trial number 0
+correct_response_rates_all <- rbind(correct_response_rates_all, correct_response_rates_all[correct_response_rates_all$condition == "neutral" & correct_response_rates_all$trial_number == 0,])
+
+#change the first entry of condition with "neutral" to "congruent" and the second to "incongruent"
+correct_response_rates_all$condition[correct_response_rates_all$condition == "neutral"][1] <- "congruent"
+correct_response_rates_all$condition[correct_response_rates_all$condition == "neutral"] <- "incongruent"
+
+
+#make a new coloumn condition_dummy_code with 0 for congruent and 1 for incongruent
+correct_response_rates_all$condition_dummy_code <- ifelse(correct_response_rates_all$condition == "congruent", 1, 0)
+
+#have a look at the hit rates
+View(correct_response_rates_all)
+
+
+
+
+#Regression analysis of correct response rate---
+#---------------------------------------------------------------
+#delete rows with trial number 0 (neutral trials
+correct_response_rates_all <- correct_response_rates_all[correct_response_rates_all$trial_number != 0,]
+
+#sqrt transformation of trial number
+correct_response_rate_sqrt <- lm(correct_response_rate ~ sqrt(trial_number) + condition_dummy_code + sqrt(trial_number)*condition_dummy_code, 
+                                 data = correct_response_rates_all,
+                                 method = "qr",
+                                 na.action = na.exclude)
+tab_model(correct_response_rate_sqrt)
+summary(correct_response_rate_sqrt)
+
+
+#plot the correct response rates
+plot <- ggplot(correct_response_rates_all, aes(x = trial_number, y = correct_response_rate, color = condition)) +
+  geom_point() +
+  geom_smooth(method = "lm",formula = y~sqrt(x), se = TRUE, level = 0.95, fullrange = TRUE)+
+  labs(title = "",
+       x = "trial number (#)",
+       y = "correct response rate (%)")+
+  scale_color_manual(values = c("blue", "red")) + 
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(color = "black"),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14, face = "bold"),
+    legend.position = "right",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 12)
+  )
+plot
+ggsave("plots/sqrt_correct_response_rate.svg", plot, width = 9, height = 6)
+ggsave("plots/sqrt_correct_response_rate.png", plot, width = 9, height = 6)
+
+
+
+
+
+
+#8. Hitting performance ----
+#---------------------------------------------------------------
+#Calculate hit rates
+#calculate hit rates for first session
+#count all TRUE values for each trial number and condition
+hit_rates_all <- data_all %>%
+  group_by(trial_number, condition) %>%
+  summarise(hit_rate = sum(hit_true_false == 1)/(sum(hit_true_false == 1)+sum(hit_true_false == 0)))
+
+#multiply the hit rates with 100 in order to have % values
+hit_rates_all$hit_rate <- hit_rates_all$hit_rate * 100
+
+#make a new coloumn condition_dummy_code with 0 for congruent and 1 for incongruent
+hit_rates_all$condition_dummy_code <- ifelse(hit_rates_all$condition == "congruent", 1, 0)
+
+#have a look at the hit rates
+View(hit_rates_all)
+
+
+#Regression analysis of hit rate---
+#---------------------------------------------------------------
+#delete rows with trial number 0 (neutral trials)
+hit_rates_all <- hit_rates_all[hit_rates_all$trial_number != 0,]
+
+#sqrt transformation of trial number
+hit_rate_sqrt <- lm(hit_rate ~ sqrt(trial_number) + condition_dummy_code + sqrt(trial_number)*condition_dummy_code, 
+                    data = hit_rates_all,
+                    method = "qr",
+                    na.action = na.exclude)
+tab_model(hit_rate_sqrt)
+summary(hit_rate_sqrt)
+
+#plot the hit rates
+plot <- ggplot(hit_rates_all, aes(x = trial_number, y = hit_rate, color = condition)) +
+  geom_point() +
+  geom_smooth(method = "lm",formula = y~sqrt(x), se = TRUE, level = 0.95, fullrange = TRUE)+
+  labs(title = "",
+       x = "trial number (#)",
+       y = "hit rate (%)")+
+  scale_color_manual(values = c("blue", "red"))+
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(color = "black"),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14, face = "bold"),
+    legend.position = "right",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 12)
+  )
+plot
+ggsave("plots/sqrt_hit_rate.svg", plot, width = 9, height = 6)
+ggsave("plots/sqrt_hit_rate.png", plot, width = 9, height = 6)
+
+
+
+
+
+
+
+
+
+
+#9. Side prediction with weight shift ----
+#logistic regression of direction taken with the predictor weight shift at -100, 200, 500
 #---------------------------------------------------------------
 #data second half
 data_second_half <- data_tendency %>%
   filter(trial_number > 40) #40 because the only the two last blocks are considered
 data_second_half$direction_taken_condition_dummy <- ifelse(data_second_half$side_played == "left" & data_second_half$condition == "congruent", 1,
-                                                     ifelse(data_second_half$side_played == "left" & data_second_half$condition == "incongruent", 0,
-                                                            ifelse(data_second_half$side_played == "right" & data_second_half$condition == "congruent", 0,
-                                                                   ifelse(data_second_half$side_played == "right" & data_second_half$condition == "incongruent", 1, NA))))
+                                                           ifelse(data_second_half$side_played == "left" & data_second_half$condition == "incongruent", 0,
+                                                                  ifelse(data_second_half$side_played == "right" & data_second_half$condition == "congruent", 0,
+                                                                         ifelse(data_second_half$side_played == "right" & data_second_half$condition == "incongruent", 1, NA))))
 
 #have a look at the data
 View(data_second_half)
@@ -761,101 +894,71 @@ View(data_second_half)
 #evaluated at -100, 100, 300, 500
 #-100
 check_oultiers <- glm(direction_taken_condition_dummy ~ side_tendency_minus_100, 
-                                       data = data_second_half, family = binomial(link = "logit"))
+                      data = data_second_half, family = binomial(link = "logit"))
 tab_model(check_oultiers)
 summary(check_oultiers)
 data_second_half_minus_100 <- remove_outliers(data_second_half, check_oultiers, 3)
 
 #building models for hit_true_false with increasing complexity
 intercept_model_minus_100_direction_taken <- glm(direction_taken_condition_dummy ~ 1, 
-                                       data = data_second_half_minus_100, family = binomial(link = "logit"))
+                                                 data = data_second_half_minus_100, family = binomial(link = "logit"))
 tab_model(intercept_model_minus_100_direction_taken)
 summary(intercept_model_minus_100_direction_taken)
 
 model_minus_100_direction_taken <- glm(direction_taken_condition_dummy ~ side_tendency_minus_100, 
-                                           data = data_second_half_minus_100, family = binomial(link = "logit"))
-tab_model(model_minus_100_direction_taken)
+                                       data = data_second_half_minus_100, family = binomial(link = "logit"))
+tab_model(model_minus_100_direction_taken) 
 summary(model_minus_100_direction_taken)
 
-model_minus_100_direction_taken_rI <- glmer(direction_taken_condition_dummy ~ side_tendency_minus_100 + (1 | vp), 
-                                         data = data_second_half_minus_100, family = binomial(link = "logit"))
-tab_model(model_minus_100_direction_taken_rI)
-summary(model_minus_100_direction_taken_rI)
+#attention singularities
+#model_minus_100_direction_taken_rI <- glmer(direction_taken_condition_dummy ~ side_tendency_minus_100 + (1 | vp), 
+#                                         data = data_second_half_minus_100, family = binomial(link = "logit"))
+#tab_model(model_minus_100_direction_taken_rI) #attention singularity!!
+#summary(model_minus_100_direction_taken_rI)
+#
+#model_minus_100_direction_taken_rSI <- glmer(direction_taken_condition_dummy ~ side_tendency_minus_100 + (side_tendency_minus_100 | vp), 
+#                                      data = data_second_half_minus_100, family = binomial(link = "logit"))
+#tab_model(model_minus_100_direction_taken_rSI) #attention singularity!!
+#summary(model_minus_100_direction_taken_rSI)
+#
+#lrtest(intercept_model_minus_100_direction_taken, model_minus_100_direction_taken, model_minus_100_direction_taken_rI, model_minus_100_direction_taken_rSI)
+#AIC(intercept_model_minus_100_direction_taken,model_minus_100_direction_taken, model_minus_100_direction_taken_rI, model_minus_100_direction_taken_rSI)
+#BIC(intercept_model_minus_100_direction_taken,model_minus_100_direction_taken, model_minus_100_direction_taken_rI, model_minus_100_direction_taken_rSI)
 
-model_minus_100_direction_taken_rSI <- glmer(direction_taken_condition_dummy ~ side_tendency_minus_100 + (side_tendency_minus_100 | vp), 
-                                      data = data_second_half_minus_100, family = binomial(link = "logit"))
-tab_model(model_minus_100_direction_taken_rSI)
-summary(model_minus_100_direction_taken_rSI)
 
-lrtest(intercept_model_minus_100_direction_taken, model_minus_100_direction_taken, model_minus_100_direction_taken_rI, model_minus_100_direction_taken_rSI)
-AIC(intercept_model_minus_100_direction_taken,model_minus_100_direction_taken, model_minus_100_direction_taken_rI, model_minus_100_direction_taken_rSI)
-BIC(intercept_model_minus_100_direction_taken,model_minus_100_direction_taken, model_minus_100_direction_taken_rI, model_minus_100_direction_taken_rSI)
-
-
-#100
-check_oultiers <- glm(direction_taken_condition_dummy ~ side_tendency_100, 
+#200
+check_oultiers <- glm(direction_taken_condition_dummy ~ side_tendency_200, 
                       data = data_second_half, family = binomial(link = "logit"))
 tab_model(check_oultiers)
 summary(check_oultiers)
-data_second_half_100 <- remove_outliers(data_second_half, check_oultiers, 3)
+data_second_half_200 <- remove_outliers(data_second_half, check_oultiers, 3)
 
 #building models for hit_true_false with increasing complexity
-intercept_model_100_direction_taken <- glm(direction_taken_condition_dummy ~ 1, 
-                                     data = data_second_half_100, family = binomial(link = "logit"))
-tab_model(intercept_model_100_direction_taken)
-summary(intercept_model_100_direction_taken)
+intercept_model_200_direction_taken <- glm(direction_taken_condition_dummy ~ 1, 
+                                           data = data_second_half_200, family = binomial(link = "logit"))
+tab_model(intercept_model_200_direction_taken) 
+summary(intercept_model_200_direction_taken)
 
-model_100_direction_taken <- glm(direction_taken_condition_dummy ~ side_tendency_100, 
-                           data = data_second_half_100, family = binomial(link = "logit"))
-tab_model(model_100_direction_taken)
-summary(model_100_direction_taken)
+model_200_direction_taken <- glm(direction_taken_condition_dummy ~ side_tendency_200, 
+                                 data = data_second_half_200, family = binomial(link = "logit"))
+tab_model(model_200_direction_taken) #reported!!
+summary(model_200_direction_taken)
 
-model_100_direction_taken_rI <- glmer(direction_taken_condition_dummy ~ side_tendency_100 + (1 | vp), 
-                                data = data_second_half_100, family = binomial(link = "logit"))
-tab_model(model_100_direction_taken_rI)
-summary(model_100_direction_taken_rI)
+#not reported
+model_200_direction_taken_rI <- glmer(direction_taken_condition_dummy ~ side_tendency_200 + (1 | vp), 
+                                      data = data_second_half_200, family = binomial(link = "logit"))
+tab_model(model_200_direction_taken_rI)
+summary(model_200_direction_taken_rI)
 
-model_100_direction_taken_rSI <- glmer(direction_taken_condition_dummy ~ side_tendency_100 + (side_tendency_100 | vp), 
-                                 data = data_second_half_100, family = binomial(link = "logit"))
-tab_model(model_100_direction_taken_rSI)
-summary(model_100_direction_taken_rSI)
+##attention singularities
+model_200_direction_taken_rSI <- glmer(direction_taken_condition_dummy ~ side_tendency_200 + (side_tendency_200 | vp), 
+                                       data = data_second_half_200, family = binomial(link = "logit"))
+tab_model(model_200_direction_taken_rSI)
+summary(model_200_direction_taken_rSI)
 
-lrtest(intercept_model_100_direction_taken, model_100_direction_taken, model_100_direction_taken_rI, model_100_direction_taken_rSI)
-AIC(intercept_model_100_direction_taken,model_100_direction_taken, model_100_direction_taken_rI, model_100_direction_taken_rSI)
-BIC(intercept_model_100_direction_taken,model_100_direction_taken, model_100_direction_taken_rI, model_100_direction_taken_rSI)
-
-
-#300
-check_oultiers <- glm(direction_taken_condition_dummy ~ side_tendency_300, 
-                      data = data_second_half, family = binomial(link = "logit"))
-tab_model(check_oultiers)
-summary(check_oultiers)
-data_second_half_300 <- remove_outliers(data_second_half, check_oultiers, 3)
-
-#building models for hit_true_false with increasing complexity
-intercept_model_300_direction_taken <- glm(direction_taken_condition_dummy ~ 1, 
-                                     data = data_second_half_300, family = binomial(link = "logit"))
-tab_model(intercept_model_300_direction_taken)
-summary(intercept_model_300_direction_taken)
-
-model_300_direction_taken <- glm(direction_taken_condition_dummy ~ side_tendency_300, 
-                           data = data_second_half_300, family = binomial(link = "logit"))
-tab_model(model_300_direction_taken)
-summary(model_300_direction_taken)
-
-model_300_direction_taken_rI <- glmer(direction_taken_condition_dummy ~ side_tendency_300 + (1 | vp), 
-                                data = data_second_half_300, family = binomial(link = "logit"))
-tab_model(model_300_direction_taken_rI)
-summary(model_300_direction_taken_rI)
-
-model_300_direction_taken_rSI <- glmer(direction_taken_condition_dummy ~ side_tendency_300 + (side_tendency_300 | vp), 
-                                 data = data_second_half_300, family = binomial(link = "logit"))
-tab_model(model_300_direction_taken_rSI)
-summary(model_300_direction_taken_rSI)
-
-lrtest(intercept_model_300_direction_taken, model_300_direction_taken, model_300_direction_taken_rI, model_300_direction_taken_rSI)
-AIC(intercept_model_300_direction_taken,model_300_direction_taken, model_300_direction_taken_rI, model_300_direction_taken_rSI)
-BIC(intercept_model_300_direction_taken,model_300_direction_taken, model_300_direction_taken_rI, model_300_direction_taken_rSI)
+lrtest(intercept_model_200_direction_taken, model_200_direction_taken, model_200_direction_taken_rI, model_200_direction_taken_rSI)
+AIC(intercept_model_200_direction_taken,model_200_direction_taken, model_200_direction_taken_rI, model_200_direction_taken_rSI)
+BIC(intercept_model_200_direction_taken,model_200_direction_taken, model_200_direction_taken_rI, model_200_direction_taken_rSI)
 
 
 #500
@@ -867,37 +970,47 @@ data_second_half_500 <- remove_outliers(data_second_half, check_oultiers, 3)
 
 #building models for hit_true_false with increasing complexity
 intercept_model_500_direction_taken <- glm(direction_taken_condition_dummy ~ 1, 
-                                     data = data_second_half_500, family = binomial(link = "logit"))
+                                           data = data_second_half_500, family = binomial(link = "logit"))
 tab_model(intercept_model_500_direction_taken)
 summary(intercept_model_500_direction_taken)
 
 model_500_direction_taken <- glm(direction_taken_condition_dummy ~ side_tendency_500, 
-                           data = data_second_half_500, family = binomial(link = "logit"))
+                                 data = data_second_half_500, family = binomial(link = "logit"))
 tab_model(model_500_direction_taken)
 summary(model_500_direction_taken)
 
+#Attention singularity!! not reported
 model_500_direction_taken_rI <- glmer(direction_taken_condition_dummy ~ side_tendency_500 + (1 | vp), 
-                                data = data_second_half_500, family = binomial(link = "logit"))
+                                      data = data_second_half_500, family = binomial(link = "logit"))
 tab_model(model_500_direction_taken_rI)
 summary(model_500_direction_taken_rI)
 
+#Attention singularity!! not reported
 model_500_direction_taken_rSI <- glmer(direction_taken_condition_dummy ~ side_tendency_500 + (side_tendency_500 | vp), 
-                                 data = data_second_half_500, family = binomial(link = "logit"))
+                                       data = data_second_half_500, family = binomial(link = "logit"))
 tab_model(model_500_direction_taken_rSI)
 summary(model_500_direction_taken_rSI)
 
-lrtest(intercept_model_500_direction_taken, model_500_direction_taken, model_500_direction_taken_rI, model_500_direction_taken_rSI)
-AIC(intercept_model_500_direction_taken,model_500_direction_taken, model_500_direction_taken_rI, model_500_direction_taken_rSI)
-BIC(intercept_model_500_direction_taken,model_500_direction_taken, model_500_direction_taken_rI, model_500_direction_taken_rSI)
+#lrtest(intercept_model_500_direction_taken, model_500_direction_taken, model_500_direction_taken_rI, model_500_direction_taken_rSI)
+#AIC(intercept_model_500_direction_taken,model_500_direction_taken, model_500_direction_taken_rI, model_500_direction_taken_rSI)
+#BIC(intercept_model_500_direction_taken,model_500_direction_taken, model_500_direction_taken_rI, model_500_direction_taken_rSI)
 
 
 
 
 
 
+
+
+
+
+
+
+
+#Perfomance prediction
 #logistic regression of hit_true_false and correct_response with predictors ---
 #---------------------------------------------------------------
-#weight shift at -100, 100, 300, 500 and condition
+#weight shift at -100, 200, 500 and condition
 #data directed to the prior
 data_directed_prior <- data_all
 for (i in 13:253) {data_directed_prior[,i] <- ifelse(data_directed_prior$side_played == "left", -data_directed_prior[,i], data_directed_prior[,i])}
@@ -912,7 +1025,7 @@ data_directed_prior_second_half <- data_directed_prior %>%
 View(data_directed_prior_second_half)
 
 #calculate logistic regression for hit_true_false
-#evaluated at -100, 100, 300, 500
+#evaluated at -100, 200, 500
 
 #correct_response
 #-100
@@ -948,70 +1061,38 @@ AIC(intercept_model_n_minus_100_response,logistic_model_n_minus_100_response, lo
 BIC(intercept_model_n_minus_100_response,logistic_model_n_minus_100_response, logistic_model_rI_minus_100_response, logistic_model_rSI_minus_100_response)
 
 
-#100
-detect_oultier_100_response <- glm(correct_response ~ side_tendency_100 + condition_dummy + side_tendency_100*condition_dummy, 
-                                  data = data_directed_prior_second_half, family = binomial(link = "logit"))
-tab_model(detect_oultier_100_response)
-summary(detect_oultier_100_response)
-data_100_response_without_outliers <- remove_outliers(data_directed_prior_second_half, detect_oultier_100_response, 3)
+#200
+detect_oultier_200_response <- glm(correct_response ~ side_tendency_200 + condition_dummy + side_tendency_200*condition_dummy, 
+                                   data = data_directed_prior_second_half, family = binomial(link = "logit"))
+tab_model(detect_oultier_200_response)
+summary(detect_oultier_200_response)
+data_200_response_without_outliers <- remove_outliers(data_directed_prior_second_half, detect_oultier_200_response, 3)
 
 #building models for correct_response with increasing complexity
-intercept_model_n_100_response <- glm(correct_response ~ 1, 
-                                     data = data_100_response_without_outliers, family = binomial(link = "logit"))
-tab_model(intercept_model_n_100_response)
-summary(intercept_model_n_100_response)
+intercept_model_n_200_response <- glm(correct_response ~ 1, 
+                                      data = data_200_response_without_outliers, family = binomial(link = "logit"))
+tab_model(intercept_model_n_200_response)
+summary(intercept_model_n_200_response)
 
-logistic_model_n_100_response <- glm(correct_response ~ side_tendency_100 + condition_dummy + side_tendency_100*condition_dummy, 
-                                    data = data_100_response_without_outliers, family = binomial(link = "logit"))
-tab_model(logistic_model_n_100_response)
-summary(logistic_model_n_100_response)
+logistic_model_n_200_response <- glm(correct_response ~ side_tendency_200 + condition_dummy + side_tendency_200*condition_dummy, 
+                                     data = data_200_response_without_outliers, family = binomial(link = "logit"))
+tab_model(logistic_model_n_200_response)
+summary(logistic_model_n_200_response)
 
-logistic_model_rI_100_response <- glmer(correct_response ~ side_tendency_100 + condition_dummy + side_tendency_100*condition_dummy+ (1 | vp), 
-                                       data = data_100_response_without_outliers, family = binomial(link = "logit"))
-tab_model(logistic_model_rI_100_response)
-summary(logistic_model_rI_100_response)
+logistic_model_rI_200_response <- glmer(correct_response ~ side_tendency_200 + condition_dummy + side_tendency_200*condition_dummy+ (1 | vp), 
+                                        data = data_200_response_without_outliers, family = binomial(link = "logit"))
+tab_model(logistic_model_rI_200_response)
+summary(logistic_model_rI_200_response)
 
-logistic_model_rSI_100_response <- glmer(correct_response ~ side_tendency_100 + condition_dummy + side_tendency_100*condition_dummy+ (side_tendency_100 | vp), 
-                                        data = data_100_response_without_outliers, family = binomial(link = "logit"))
-tab_model(logistic_model_rSI_100_response)
-summary(logistic_model_rSI_100_response)
+logistic_model_rSI_200_response <- glmer(correct_response ~ side_tendency_200 + condition_dummy + side_tendency_200*condition_dummy+ (side_tendency_200 | vp), 
+                                         data = data_200_response_without_outliers, family = binomial(link = "logit"))
+tab_model(logistic_model_rSI_200_response)
+summary(logistic_model_rSI_200_response)
 
-lrtest(intercept_model_n_100_response,logistic_model_n_100_response, logistic_model_rI_100_response, logistic_model_rSI_100_response)
-AIC(intercept_model_n_100_response,logistic_model_n_100_response, logistic_model_rI_100_response, logistic_model_rSI_100_response)
-BIC(intercept_model_n_100_response,logistic_model_n_100_response, logistic_model_rI_100_response, logistic_model_rSI_100_response)
+lrtest(intercept_model_n_200_response,logistic_model_n_200_response, logistic_model_rI_200_response, logistic_model_rSI_200_response)
+AIC(intercept_model_n_200_response,logistic_model_n_200_response, logistic_model_rI_200_response, logistic_model_rSI_200_response)
+BIC(intercept_model_n_200_response,logistic_model_n_200_response, logistic_model_rI_200_response, logistic_model_rSI_200_response)
 
-
-#300
-detect_oultier_300_response <- glm(correct_response ~ side_tendency_300 + condition_dummy + side_tendency_300*condition_dummy, 
-                                  data = data_directed_prior_second_half, family = binomial(link = "logit"))
-tab_model(detect_oultier_300_response)
-summary(detect_oultier_300_response)
-data_300_response_without_outliers <- remove_outliers(data_directed_prior_second_half, detect_oultier_300_response, 3)
-
-#building models for correct_response with increasing complexity
-intercept_model_n_300_response <- glm(correct_response ~ 1, 
-                                     data = data_300_response_without_outliers, family = binomial(link = "logit"))
-tab_model(intercept_model_n_300_response)
-summary(intercept_model_n_300_response)
-
-logistic_model_n_300_response <- glm(correct_response ~ side_tendency_300 + condition_dummy + side_tendency_300*condition_dummy, 
-                                    data = data_300_response_without_outliers, family = binomial(link = "logit"))
-tab_model(logistic_model_n_300_response)
-summary(logistic_model_n_300_response)
-
-logistic_model_rI_300_response <- glmer(correct_response ~ side_tendency_300 + condition_dummy + side_tendency_300*condition_dummy+ (1 | vp), 
-                                       data = data_300_response_without_outliers, family = binomial(link = "logit"))
-tab_model(logistic_model_rI_300_response)
-summary(logistic_model_rI_300_response)
-
-logistic_model_rSI_300_response <- glmer(correct_response ~ side_tendency_300 + condition_dummy + side_tendency_300*condition_dummy+ (side_tendency_300 | vp), 
-                                        data = data_300_response_without_outliers, family = binomial(link = "logit"))
-tab_model(logistic_model_rSI_300_response)
-summary(logistic_model_rSI_300_response)
-
-lrtest(intercept_model_n_300_response,logistic_model_n_300_response, logistic_model_rI_300_response, logistic_model_rSI_300_response)
-AIC(intercept_model_n_300_response,logistic_model_n_300_response, logistic_model_rI_300_response, logistic_model_rSI_300_response)
-BIC(intercept_model_n_300_response,logistic_model_n_300_response, logistic_model_rI_300_response, logistic_model_rSI_300_response)
 
 
 #500
@@ -1045,6 +1126,9 @@ summary(logistic_model_rSI_500_response)
 lrtest(intercept_model_n_500_response,logistic_model_n_500_response, logistic_model_rI_500_response, logistic_model_rSI_500_response)
 AIC(intercept_model_n_500_response,logistic_model_n_500_response, logistic_model_rI_500_response, logistic_model_rSI_500_response)
 BIC(intercept_model_n_500_response,logistic_model_n_500_response, logistic_model_rI_500_response, logistic_model_rSI_500_response)
+
+
+
 
 #hit_true_false
 #-100
@@ -1080,70 +1164,38 @@ AIC(intercept_model_n_minus_100_hit,logistic_model_n_minus_100_hit, logistic_mod
 BIC(intercept_model_n_minus_100_hit,logistic_model_n_minus_100_hit, logistic_model_rI_minus_100_hit, logistic_model_rSI_minus_100_hit)
 
 
-#100
-detect_oultier_100_hit <- glm(hit_true_false ~ side_tendency_100 + condition_dummy + side_tendency_100*condition_dummy, 
+#200
+detect_oultier_200_hit <- glm(hit_true_false ~ side_tendency_200 + condition_dummy + side_tendency_200*condition_dummy, 
                               data = data_directed_prior_second_half, family = binomial(link = "logit"))
-tab_model(detect_oultier_100_hit)
-summary(detect_oultier_100_hit)
-data_100_hit_without_outliers <- remove_outliers(data_directed_prior_second_half, detect_oultier_100_hit, 3)
+tab_model(detect_oultier_200_hit)
+summary(detect_oultier_200_hit)
+data_200_hit_without_outliers <- remove_outliers(data_directed_prior_second_half, detect_oultier_200_hit, 3)
 
 #building models for hit_true_false with increasing complexity
-intercept_model_n_100_hit <- glm(hit_true_false ~ 1, 
-                                 data = data_100_hit_without_outliers, family = binomial(link = "logit"))
-tab_model(intercept_model_n_100_hit)
-summary(intercept_model_n_100_hit)
+intercept_model_n_200_hit <- glm(hit_true_false ~ 1, 
+                                 data = data_200_hit_without_outliers, family = binomial(link = "logit"))
+tab_model(intercept_model_n_200_hit)
+summary(intercept_model_n_200_hit)
 
-logistic_model_n_100_hit <- glm(hit_true_false ~ side_tendency_100 + condition_dummy + side_tendency_100*condition_dummy, 
-                                data = data_100_hit_without_outliers, family = binomial(link = "logit"))
-tab_model(logistic_model_n_100_hit)
-summary(logistic_model_n_100_hit)
+logistic_model_n_200_hit <- glm(hit_true_false ~ side_tendency_200 + condition_dummy + side_tendency_200*condition_dummy, 
+                                data = data_200_hit_without_outliers, family = binomial(link = "logit"))
+tab_model(logistic_model_n_200_hit)
+summary(logistic_model_n_200_hit)
 
-logistic_model_rI_100_hit <- glmer(hit_true_false ~ side_tendency_100 + condition_dummy + side_tendency_100*condition_dummy+ (1 | vp), 
-                                   data = data_100_hit_without_outliers, family = binomial(link = "logit"))
-tab_model(logistic_model_rI_100_hit)
-summary(logistic_model_rI_100_hit)
+logistic_model_rI_200_hit <- glmer(hit_true_false ~ side_tendency_200 + condition_dummy + side_tendency_200*condition_dummy+ (1 | vp), 
+                                   data = data_200_hit_without_outliers, family = binomial(link = "logit"))
+tab_model(logistic_model_rI_200_hit)
+summary(logistic_model_rI_200_hit)
 
-logistic_model_rSI_100_hit <- glmer(hit_true_false ~ side_tendency_100 + condition_dummy + side_tendency_100*condition_dummy+ (side_tendency_100 | vp), 
-                                    data = data_100_hit_without_outliers, family = binomial(link = "logit"))
-tab_model(logistic_model_rSI_100_hit)
-summary(logistic_model_rSI_100_hit)
+logistic_model_rSI_200_hit <- glmer(hit_true_false ~ side_tendency_200 + condition_dummy + side_tendency_200*condition_dummy+ (side_tendency_200 | vp), 
+                                    data = data_200_hit_without_outliers, family = binomial(link = "logit"))
+tab_model(logistic_model_rSI_200_hit)
+summary(logistic_model_rSI_200_hit)
 
-lrtest(intercept_model_n_100_hit,logistic_model_n_100_hit, logistic_model_rI_100_hit, logistic_model_rSI_100_hit)
-AIC(intercept_model_n_100_hit,logistic_model_n_100_hit, logistic_model_rI_100_hit, logistic_model_rSI_100_hit)
-BIC(intercept_model_n_100_hit,logistic_model_n_100_hit, logistic_model_rI_100_hit, logistic_model_rSI_100_hit)
+lrtest(intercept_model_n_200_hit,logistic_model_n_200_hit, logistic_model_rI_200_hit, logistic_model_rSI_200_hit)
+AIC(intercept_model_n_200_hit,logistic_model_n_200_hit, logistic_model_rI_200_hit, logistic_model_rSI_200_hit)
+BIC(intercept_model_n_200_hit,logistic_model_n_200_hit, logistic_model_rI_200_hit, logistic_model_rSI_200_hit)
 
-
-#300
-detect_oultier_300_hit <- glm(hit_true_false ~ side_tendency_300 + condition_dummy + side_tendency_300*condition_dummy, 
-                              data = data_directed_prior_second_half, family = binomial(link = "logit"))
-tab_model(detect_oultier_300_hit)
-summary(detect_oultier_300_hit)
-data_300_hit_without_outliers <- remove_outliers(data_directed_prior_second_half, detect_oultier_300_hit, 3)
-
-#building models for hit_true_false with increasing complexity
-intercept_model_n_300_hit <- glm(hit_true_false ~ 1, 
-                                 data = data_300_hit_without_outliers, family = binomial(link = "logit"))
-tab_model(intercept_model_n_300_hit)
-summary(intercept_model_n_300_hit)
-
-logistic_model_n_300_hit <- glm(hit_true_false ~ side_tendency_300 + condition_dummy + side_tendency_300*condition_dummy, 
-                                data = data_300_hit_without_outliers, family = binomial(link = "logit"))
-tab_model(logistic_model_n_300_hit)
-summary(logistic_model_n_300_hit)
-
-logistic_model_rI_300_hit <- glmer(hit_true_false ~ side_tendency_300 + condition_dummy + side_tendency_300*condition_dummy+ (1 | vp), 
-                                   data = data_300_hit_without_outliers, family = binomial(link = "logit"))
-tab_model(logistic_model_rI_300_hit)
-summary(logistic_model_rI_300_hit)
-
-logistic_model_rSI_300_hit <- glmer(hit_true_false ~ side_tendency_300 + condition_dummy + side_tendency_300*condition_dummy+ (side_tendency_300 | vp), 
-                                    data = data_300_hit_without_outliers, family = binomial(link = "logit"))
-tab_model(logistic_model_rSI_300_hit)
-summary(logistic_model_rSI_300_hit)
-
-lrtest(intercept_model_n_300_hit,logistic_model_n_300_hit, logistic_model_rI_300_hit, logistic_model_rSI_300_hit)
-AIC(intercept_model_n_300_hit,logistic_model_n_300_hit, logistic_model_rI_300_hit, logistic_model_rSI_300_hit)
-BIC(intercept_model_n_300_hit,logistic_model_n_300_hit, logistic_model_rI_300_hit, logistic_model_rSI_300_hit)
 
 
 #500
