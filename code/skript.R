@@ -50,7 +50,7 @@ library(lme4)
 library(lmtest)
 
 
-#2. Functions ----
+#2. Function ----
 #---------------------------------------------------------------
 # Define the function detect and remove outliers with Cook's distance
 remove_outliers <- function(data, model, cook_threshold) {
@@ -67,29 +67,6 @@ remove_outliers <- function(data, model, cook_threshold) {
     anti_join(outliers) 
   # Return the cleaned data and the model as a list
   return(data_clean)
-}
-
-remove_1d_mahalanobis_outliers <- function(data, threshold = 1) {
-  # Ensure data is a numeric vector
-  if (!is.numeric(data)) {
-    stop("Data must be a numeric vector.")
-  }
-  
-  # Calculate the mean and variance of the data
-  mean_data <- mean(data)
-  var_data <- var(data)
-  
-  # Compute Mahalanobis distance for each data point
-  mahalanobis_distances <- (data - mean_data)^2 / var_data
-  
-  # Identify outliers
-  outliers <- mahalanobis_distances > threshold^2
-  
-  # Remove outliers
-  cleaned_data <- data[!outliers]
-  
-  # Return the cleaned data
-  return(cleaned_data)
 }
 
 
@@ -186,6 +163,7 @@ data_all_split_performed_false <- filter(data_all,
 #split step actions
 data_all_split_Step_starts <- filter(data_all, 
                                      !is.na(splitstep_start))
+data_all_split_Step_starts
 data_all_time_of_lateral_movement_initiation <- filter(data_all,
                                                        !is.na(lateral_movement_initiation) &
                                                          lateral_movement_initiation > -0.3)
@@ -207,23 +185,15 @@ length(data_all_split_performed_true$trial) # 3030 (3030/(3030+315)=90.6%)
 length(data_all_split_performed_false$trial) # 315 (315/(3030+315)=9.4%)
 
 
-data_all_split_Step_starts <- remove_1d_mahalanobis_outliers(data_all_split_Step_starts$splitstep_start)
-boxplot(data_all_split_Step_starts)
-summary(data_all_split_Step_starts)
-mean(data_all_split_Step_starts)
-sd(data_all_split_Step_starts)
+boxplot(data_all_split_Step_starts$splitstep_start)
+summary(data_all_split_Step_starts$splitstep_start)
 
-data_all_time_of_lateral_movement_initiation <- remove_1d_mahalanobis_outliers(data_all_time_of_lateral_movement_initiation$lateral_movement_initiation)
-boxplot(data_all_time_of_lateral_movement_initiation)
-summary(data_all_time_of_lateral_movement_initiation)
-mean(data_all_time_of_lateral_movement_initiation)
-sd(data_all_time_of_lateral_movement_initiation)
+boxplot(data_all_time_of_lateral_movement_initiation$lateral_movement_initiation)
+summary(data_all_time_of_lateral_movement_initiation$lateral_movement_initiation)
 
-data_all_hit_time <- remove_1d_mahalanobis_outliers(data_all_hit_time$hit_time)
-boxplot(data_all_hit_time)
-summary(data_all_hit_time)
-mean(data_all_hit_time)
-sd(data_all_hit_time)
+boxplot(data_all_hit_time$hit_time)
+summary(data_all_hit_time$hit_time)
+
 
 #6. Mean development of side tendency over time (weight shift dynamics) ----
 #---------------------------------------------------------------
@@ -404,32 +374,32 @@ neutral_incorrect <- data.frame(
 
 
 # Plot the mean development of side tendency over time
-plot <- ggplot() +
+
+plot <- ggplot() + 
   geom_line(data = congruent_correct, 
-            aes(x = time, y = side_tendency, color = "Congruent/Correct", linetype = "Congruent/Correct")) +
+            aes(x = time, y = side_tendency, color = "Congruent/Correct", linetype = "Congruent/Correct"), size = 1.5) +
   geom_line(data = congruent_incorrect, 
-            aes(x = time, y = side_tendency, color = "Congruent/Incorrect", linetype = "Congruent/Incorrect")) +
+            aes(x = time, y = side_tendency, color = "Congruent/Incorrect", linetype = "Congruent/Incorrect"), size = 1.5) +
   geom_line(data = incongruent_correct, 
-            aes(x = time, y = side_tendency, color = "Incongruent/Correct", linetype = "Incongruent/Correct")) +
+            aes(x = time, y = side_tendency, color = "Incongruent/Correct", linetype = "Incongruent/Correct"), size = 1.5) +
   geom_line(data = incongruent_incorrect, 
-            aes(x = time, y = side_tendency, color = "Incongruent/Incorrect", linetype = "Incongruent/Incorrect")) +
+            aes(x = time, y = side_tendency, color = "Incongruent/Incorrect", linetype = "Incongruent/Incorrect"), size = 1.5)+
   geom_line(data = neutral_correct, 
-            aes(x = time, y = side_tendency, color = "Neutral/Correct", linetype = "Neutral/Correct")) +
+            aes(x = time, y = side_tendency, color = "Neutral/Correct", linetype = "Neutral/Correct"), size = 1.5) +
   geom_line(data = neutral_incorrect, 
-            aes(x = time, y = side_tendency, color = "Neutral/Incorrect", linetype = "Neutral/Incorrect")) +
-  
+            aes(x = time, y = side_tendency, color = "Neutral/Incorrect", linetype = "Neutral/Incorrect"), size = 1.5) +
   # Add vertical black lines at key x positions
-  geom_vline(xintercept = c(0, 466, 570, 990), color = "black", linetype = "solid") +
+  geom_vline(xintercept = c(-1, 466, 620, 1000), color = "black", linetype = "solid", size = 1) +
   
   # Add annotations for the vertical lines
-  annotate("text", x = 0, y = 100, 
-           label = "Serve", angle = 90, vjust = -0.5, hjust = 0.1) +
+  annotate("text", x = -1, y = 100, 
+           label = "Serve", angle = 90, vjust = -0.5, hjust = 0.3, size = 8) +
   annotate("text", x = 466, y = 100, 
-           label = "Bounce", angle = 90, vjust = -0.5, hjust = 0.3) +
-  annotate("text", x = 570, y = 100,  
-           label = "Lateral movement initiation", angle = 90, vjust = -0.5, hjust = 0.8) +
-  annotate("text", x = 990, y = 100, 
-           label = "Return", angle = 90, vjust = -0.5, hjust = 0.2) +
+           label = "Bounce", angle = 90, vjust = -0.5, hjust = 0.5, size = 8) +
+  annotate("text", x = 620, y = 100,  
+           label = "Lateral movement initiation", angle = 90, vjust = -0.5, hjust = 0.85, size = 8) +
+  annotate("text", x = 1000, y = 100, 
+           label = "Return", angle = 90, vjust = -0.5, hjust = 0.4, size = 8) +
   
   # Define color and linetype mappings
   scale_color_manual(values = c(
@@ -443,11 +413,11 @@ plot <- ggplot() +
   
   scale_linetype_manual(values = c(
     "Congruent/Correct" = "solid", 
-    "Congruent/Incorrect" = "dashed", 
+    "Congruent/Incorrect" = "dotted", 
     "Incongruent/Correct" = "solid", 
-    "Incongruent/Incorrect" = "dashed",
+    "Incongruent/Incorrect" = "dotted",
     "Neutral/Correct" = "solid",
-    "Neutral/Incorrect" = "dashed"
+    "Neutral/Incorrect" = "dotted"
   )) +
   
   labs(
@@ -462,20 +432,21 @@ plot <- ggplot() +
   theme(
     legend.position = "right",   
     panel.grid = element_blank(),  
-    axis.line = element_line(),    
-    axis.ticks = element_line(),
+    axis.line = element_line(size=1),    
+    axis.ticks = element_line(size=1),
     text = element_text(size = 26),         
-    axis.text = element_text(size = 26),    
-    axis.title = element_text(size = 26),   
-    legend.text = element_text(size = 26),  
-    legend.title = element_text(size = 26)  
+    axis.text = element_text(size = 26, face = "plain", color = "black"),    
+    axis.title = element_text(size = 26, face = "plain", color = "black"),   
+    legend.text = element_text(size = 26, margin = margin(b = 15)),  
+    legend.title = element_blank(),
+    legend.spacing.x = unit(1, "cm"),   
+    legend.key.width = unit(1.5, "cm")   
   )
 
 
 plot
 ggsave("plots/prior_impact_over_second_half_of_biased_and_neutral_trials_on_weight_shift.png", device = "png", width = 20, height = 12)
 ggsave("plots/prior_impact_over_second_half_of_biased_and_neutral_trials_on_weight_shift.svg", device = "svg", width = 20, height = 12)
-
 
 
 
@@ -788,25 +759,26 @@ summary(correct_response_rate_sqrt)
 #plot the correct response rates
 plot <- ggplot(correct_response_rates_all, aes(x = trial_number, y = correct_response_rate, color = condition)) +
   geom_point() +
-  geom_smooth(method = "lm",formula = y~sqrt(x), se = TRUE, level = 0.95, fullrange = TRUE)+
+  geom_smooth(method = "lm",formula = y~sqrt(x), se = TRUE, level = 0.95, fullrange = TRUE, size = 0.75)+
   labs(title = "",
-       x = "trial number (#)",
-       y = "correct response rate (%)")+
-  scale_color_manual(values = c("blue", "red")) + 
+       x = "Trial Number (#)",
+       y = "Correct Response Rate (%)")+
+  scale_color_manual(values = c("blue", "red"),
+                     labels = c("Congruent", "Incongruent")) + 
   theme(
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
     panel.background = element_blank(),
-    axis.line = element_line(color = "black"),
-    axis.text = element_text(size = 12),
-    axis.title = element_text(size = 14, face = "bold"),
+    axis.line = element_line(color = "black", size = 0.5),
+    axis.text = element_text(size = 13, face = "plain", color = "black"),
+    axis.title = element_text(size = 13, face = "plain", color = "black"),
     legend.position = "right",
     legend.title = element_blank(),
-    legend.text = element_text(size = 12)
+    legend.text = element_text(size = 13)
   )
 plot
-ggsave("plots/sqrt_correct_response_rate.svg", plot, width = 9, height = 6)
-ggsave("plots/sqrt_correct_response_rate.png", plot, width = 9, height = 6)
+ggsave("plots/sqrt_correct_response_rate.svg", plot, width = 10, height = 6)
+ggsave("plots/sqrt_correct_response_rate.png", plot, width = 10, height = 6)
 
 
 
@@ -848,25 +820,26 @@ summary(hit_rate_sqrt)
 #plot the hit rates
 plot <- ggplot(hit_rates_all, aes(x = trial_number, y = hit_rate, color = condition)) +
   geom_point() +
-  geom_smooth(method = "lm",formula = y~sqrt(x), se = TRUE, level = 0.95, fullrange = TRUE)+
+  geom_smooth(method = "lm",formula = y~sqrt(x), se = TRUE, level = 0.95, fullrange = TRUE, size = 0.75)+
   labs(title = "",
-       x = "trial number (#)",
-       y = "hit rate (%)")+
-  scale_color_manual(values = c("blue", "red"))+
+       x = "Trial Number (#)",
+       y = "Hit Rate (%)")+
+  scale_color_manual(values = c("blue", "red"),
+                     labels = c("Congruent", "Incongruent")) + 
   theme(
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
     panel.background = element_blank(),
-    axis.line = element_line(color = "black"),
-    axis.text = element_text(size = 12),
-    axis.title = element_text(size = 14, face = "bold"),
+    axis.line = element_line(color = "black", size = 0.5),
+    axis.text = element_text(size = 13, face = "plain", color = "black"),
+    axis.title = element_text(size = 13, face = "plain", color = "black"),
     legend.position = "right",
     legend.title = element_blank(),
-    legend.text = element_text(size = 12)
+    legend.text = element_text(size = 13)
   )
 plot
-ggsave("plots/sqrt_hit_rate.svg", plot, width = 9, height = 6)
-ggsave("plots/sqrt_hit_rate.png", plot, width = 9, height = 6)
+ggsave("plots/sqrt_hit_rate.svg", plot, width = 10, height = 6)
+ggsave("plots/sqrt_hit_rate.png", plot, width = 10, height = 6)
 
 
 
@@ -891,7 +864,7 @@ data_second_half$direction_taken_condition_dummy <- ifelse(data_second_half$side
 #have a look at the data
 View(data_second_half)
 
-#evaluated at -100, 100, 300, 500
+#evaluated at -100, 200, 500
 #-100
 check_oultiers <- glm(direction_taken_condition_dummy ~ side_tendency_minus_100, 
                       data = data_second_half, family = binomial(link = "logit"))
