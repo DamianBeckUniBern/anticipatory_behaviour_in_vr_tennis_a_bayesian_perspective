@@ -1,6 +1,6 @@
-This is the repository for our work “*Tennis players exploit prior information to improve performance: evidence for continuous anticipatory decision-making*” containing data and code used for the data analysis, the experimental protocols, c3d files of a 21 skeleton model of each return of each tennis player, and visualisation.
+This is the repository for our work “*Tennis players exploit prior information to improve performance: evidence for continuous anticipatory decision-making under uncertainty*” containing data and code used for the data analysis, the experimental protocols, c3d files of a 21 skeleton model of each return of each tennis player, and visualisation.
 
-We developed an immersive VR tennis environment, where we tested how tennis players exploit prior knowledge to improve performance und continuous decision-making when returning tennis serves.
+We developed an immersive XR tennis environment, where we tested how tennis players exploit prior knowledge to improve performance und continuous decision-making when returning tennis serves.
 
 <img src="./experimental_task/experimental_task.gif" alt="image" width="700" height="auto">
 
@@ -24,6 +24,7 @@ Development of correct response rate and hit rate over all blocks with a probabi
 </table>
 
 <p>Figure 1 Development of tennis player’s correct response rate (left) to go the correct side and hit rate (right) during the experiment. The congruent trials were played with an 80% chance and the incongruent with a 20% chance. The trials before were played with a 50% chance on both sides, such as they started with a neutral prior. We took the root of the trial number as the regression predictor according the exponential law of practice (Heathcote & Brown, 2000). The uncertainty area represents a 95% confidence interval of the regression lines.</p>
+
 ## Weight shift over a return
 <img src="./plots/prior_impact_over_second_half_of_biased_and_neutral_trials_on_weight_shift.png" style="width:850px;height:auto;">
 
